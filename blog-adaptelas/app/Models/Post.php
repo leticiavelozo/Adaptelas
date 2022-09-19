@@ -13,7 +13,10 @@ class Post extends Model
         'title',
         'description',
         'author',
-        'text'
+        'text',
     ];
+
+
+
 
 }

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Post;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\View\Factory;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
@@ -18,8 +20,8 @@ class PostController extends Controller
      */
     public function index(): View
     {
-        $posts = Post::All();
-        return view('welcome', compact('posts'));
+        $posts = Post::latest()->get()->map(fn(Post $post) => $post->load('user'));
+        return view('blog', compact('posts'));
     }
 
     /**
@@ -60,24 +62,29 @@ class PostController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param Post $post
-     * @return Response
+     * @param  int $id
+     * @return Application|Factory|View
      */
-    public function edit(Post $post)
+    public function edit(int $id): View|Factory|Application
     {
-        //
+        $post = Post::findOrFail($id);
+        return view('editblog', compact('post'));
     }
 
     /**
      * Update the specified resource in storage.
      *
      * @param UpdatePostRequest $request
-     * @param Post $post
-     * @return Response
+     * @param int $id
+     * @return RedirectResponse
      */
-    public function update(UpdatePostRequest $request, Post $post)
+    public function update(UpdatePostRequest $request, int $id): RedirectResponse
     {
-        //
+        $post = Post::findOrFail($id);
+        $data = $request->validated();
+        $post->update($data);
+
+        return redirect()->route('blog.index');
     }
 
     /**
@@ -88,8 +95,9 @@ class PostController extends Controller
      */
     public function destroy(int $id): RedirectResponse
     {
-        $post = POst::find($id);
-        if (isset($post)) $post->delete();
+        $post = Post::find($id);
+        $post->delete();
+
         return redirect()->route('blog.index');
     }
 }
